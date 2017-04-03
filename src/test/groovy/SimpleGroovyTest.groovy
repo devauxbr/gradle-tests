@@ -24,34 +24,42 @@ class SimpleGroovyTest {
                 "DDYT-BASE-1.0.9",
                 "DDYT-BASE-2.3.45",
                 "DDYT-BASE-4.1.32",
+                "afzfa",
+                "qsdfzef",
         ]
 
-        tags = tags.collect {
-            it.replaceAll("DDYT-BASE-", "")
-        }
+        // Keep only relevant tags and extract version
+        tags = tags
+                .findAll { it.contains "DDYT-BASE-" }
+                .collect { it.replaceAll("DDYT-BASE-", "") }
 
+        // Define intermediate structure
         def mem = [
-                0: [version : 0, tag : 0], // Ignored
-                1: [version : 0, tag : 0],
-                2: [version : 0, tag : 0],
-                3: [version : 0, tag : 0]
+                0: [version: 0, tag: 0], // IGNORED
+                1: [version: 0, tag: 0], // major
+                2: [version: 0, tag: 0], // minor
+                3: [version: 0, tag: 0] // bugfix
         ]
 
+        // Define result
         def candidates = [
                 1: "",
                 2: "",
                 3: ""
         ]
 
+        // Store last version for major, minor and bugfix in the intermediate structure
         tags.eachWithIndex { it, index ->
             def items = it.split("\\.")
             items = ["0", *items]
-            for (int i = 0; i <=3; i++) {
+            for (int i = 0; i <= 3; i++) {
                 if (items[i].toInteger() > mem.get(i).version) {
                     mem.put(i, [version: items[i].toInteger(), tag: it])
                 }
             }
         }
+
+        // For each retrieved "last version", compute the next version to suggest to the user
         mem.each { i, res ->
             if (i == 0) return
             def items = res.tag.split("\\.")
@@ -59,13 +67,13 @@ class SimpleGroovyTest {
 
             switch (i) {
                 case 1:
-                    candidates.put(i,"${items[1].toInteger() + 1}."+items[2]+"."+items[3])
+                    candidates.put(i, "${items[1].toInteger() + 1}." + items[2] + "." + items[3])
                     break
                 case 2:
-                    candidates.put(i,items[1]+"."+"${items[2].toInteger() + 1}."+items[3])
+                    candidates.put(i, items[1] + "." + "${items[2].toInteger() + 1}." + items[3])
                     break
                 case 3:
-                    candidates.put(i,items[1]+"."+items[2]+".${items[3].toInteger() + 1}")
+                    candidates.put(i, items[1] + "." + items[2] + ".${items[3].toInteger() + 1}")
                     break
             }
         }
